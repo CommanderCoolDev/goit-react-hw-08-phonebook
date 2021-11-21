@@ -1,90 +1,88 @@
+import FormContainer from '../FormComponents/FormContainer';
 import { useState } from 'react';
-import shortid from 'shortid';
-import s from './ContactForm.module.css';
+import Form from '../FormComponents/Form';
+import Input from '../FormComponents/Input';
+import PrimaryButton from '../FormComponents/PrimaryButton';
 import { useSelector, useDispatch } from 'react-redux';
-// import * as  contactsActions from '../../redux/contact/contacts-actions';
-import { getContacts } from '../../redux/contact/contacts-selectors';
-import contactsOperations from '../../redux/contact/contacts-operations';
+import { contactsOperations } from 'redux/contacts';
+import { contactsSelectors } from 'redux/contacts';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers';
+import * as yup from 'yup';
+import NumberFormat from 'react-number-format';
+import PersonAddIcon from '@material-ui/icons/PersonAdd';
+
+const schema = yup.object().shape({
+  name: yup
+    .string()
+    .matches(/^([^0-9]*)$/, 'Name should not contain numbers')
+    .required('First name is a required field'),
+  number: yup
+    .string()
+  
+    .required('Phone number is a required field'),
+});
 
 export default function ContactForm() {
-  const [name, setName] = useState('');
+  const dispatch = useDispatch();
+  const contacts = useSelector(contactsSelectors.getContacts);
   const [number, setNumber] = useState('');
 
-  const contactNameId = shortid.generate();
-  const contactNumberId = shortid.generate();
-
-  const dispatch = useDispatch();
-  const contacts = useSelector(getContacts);
-
   const handleChange = e => {
-    const { name, value } = e.currentTarget;
-    switch (name) {
-      case 'name':
-        setName(value);
-        break;
-      case 'number':
-        setNumber(value);
-        break;
-      default:
-        return;
-    }
+    const { value } = e.currentTarget;
+    setNumber(value);
   };
 
-  const handleSubmit = e => {
-    e.preventDefault();
-    if (name === '') {
-      alert(`Введите, пожалуйста, имя контакта.`);
+  const { register, handleSubmit, errors } = useForm({
+    mode: 'onBlur',
+    resolver: yupResolver(schema),
+  });
+
+  const handleFormSubmit = (data, e) => {
+    if (contacts.find(contact => contact.name === data.name)) {
+      alert(`${data.name} is already in contacts.`);
       return;
     }
-
-    if (number === '') {
-      alert(`Введите, пожалуйста, номер телефона контакта.`);
-      return;
-    }
-
-    if (contacts.find(contact => contact.name === name)) {
-      alert(`${name} is already in contacts.`);
-      reset();
-      return;
-    }
-
-    dispatch(contactsOperations.addContact(name, number));
-    reset();
-  };
-
-  const reset = () => {
-    setName('');
+    dispatch(contactsOperations.addContact(data.name, data.number));
+    e.target.reset();
     setNumber('');
   };
 
   return (
-    <form className={s.form} onSubmit={handleSubmit}>
-      <label className={s.label} htmlFor={contactNameId}>
-        Name
-        <input
-          className={s.input}
+    <FormContainer>
+      <Form onSubmit={handleSubmit(handleFormSubmit)}>
+        <Input
           type="text"
           name="name"
-          value={name}
-          onChange={handleChange}
-          id={contactNameId}
+          label="Name"
+          error={!!errors.name}
+          helperText={errors?.name?.message}
+          ref={register}
         />
-      </label>
-      <label className={s.label} htmlFor={contactNumberId}>
-        Number
-        <input
-          className={s.input}
-          type="text"
+        <NumberFormat
+          type="tel"
           name="number"
+          label="Phone number 0XX XXX XX XX"
+          inputMode="numeric"
+          autoComplete="tel"
+          error={!!errors.number}
+          helperText={errors?.number?.message}
+          inputRef={register}
+          customInput={Input}
+          format="+38 (###) ### ## ##"
+          mask="_"
           value={number}
           onChange={handleChange}
-          id={contactNumberId}
         />
-      </label>
-
-      <button className={s.btn} type="submit">
-        Add contact
-      </button>
-    </form>
+        <PrimaryButton
+          startIcon={<PersonAddIcon />}
+          type="submit"
+          color="primary"
+          reset
+        >
+          Add contact
+        </PrimaryButton>
+      </Form>
+    </FormContainer>
   );
 }

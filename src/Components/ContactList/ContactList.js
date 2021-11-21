@@ -1,31 +1,50 @@
+import React from 'react';
 import PropTypes from 'prop-types';
-
-import s from './ContactList.module.css';
-
+import s from './contactList.module.css';
 import { useSelector, useDispatch } from 'react-redux';
-// import contactsActions from '../../redux/contact/contacts-actions';
-import { getVisibleContacts } from '../../redux/contact/contacts-selectors';
-import contactsOperations from '../../redux/contact/contacts-operations';
+import { contactsOperations } from 'redux/contacts';
+import { contactsSelectors } from 'redux/contacts';
 import { useEffect } from 'react';
+import Button from '@material-ui/core/Button';
+import { makeStyles } from '@material-ui/core/styles';
+import DeleteIcon from '@material-ui/icons/Delete';
+
+const useStyles = makeStyles(theme => ({
+  root: {
+    margin: theme.spacing(1, 0, 1),
+    background: 'linear-gradient(45deg, #FE6B8B 30%, #FF8E53 90%)',
+    boxShadow: '0 3px 5px 2px rgba(255, 105, 135, .3)',
+    color: 'white',
+  },
+}));
 
 export default function ContactList() {
-  const contacts = useSelector(getVisibleContacts);
+  const styles = useStyles();
+
   const dispatch = useDispatch();
 
-  const onDeleteContact = id => dispatch(contactsOperations.deleteContact(id));
   useEffect(() => {
     dispatch(contactsOperations.fetchContacts());
   }, [dispatch]);
-  
+
+  const contacts = useSelector(contactsSelectors.getVisibleContacts);
+
+  const onDeleteContact = id => dispatch(contactsOperations.deleteContact(id));
+
   return (
-    <ul>
+    <ul className={s.list}>
       {contacts.map(({ id, name, number }) => (
-        <li className={s.item} key={id}>
-          <span className={s.span}>{name}: </span>
-          <span className={s.span}>{number}</span>
-          <button onClick={() => onDeleteContact(id)} className={s.btn}>
-            DELETE!!!!!
-          </button>
+        <li key={id}>
+          <span className={s.listItemText}>{name}:</span>
+          <span className={s.listItemText}>{number}</span>
+          <Button
+            startIcon={<DeleteIcon fontSize="small" color="white" />}
+            className={styles.root}
+            type="button"
+            onClick={() => onDeleteContact(id)}
+          >
+            Delete
+          </Button>
         </li>
       ))}
     </ul>
@@ -33,10 +52,9 @@ export default function ContactList() {
 }
 
 ContactList.propTypes = {
-  contacts: PropTypes.shape({
-    id: PropTypes.number.isRequired,
-    name: PropTypes.string.isRequired,
-    number: PropTypes.number.isRequired,
-  }),
-  onDelete: PropTypes.func.isRequired,
+  contacts: PropTypes.array,
+  id: PropTypes.string,
+  name: PropTypes.string,
+  number: PropTypes.string,
+  onDeleteContact: PropTypes.func,
 };

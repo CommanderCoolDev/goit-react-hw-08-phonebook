@@ -27,7 +27,7 @@ const HomeView = () => {
     dots: true,
     infinite: true,
     autoplay: true,
-    speed: 800,
+    speed: 1200,
     autoplaySpeed: 2000,
     cssEase: 'linear',
     centerPadding: '60px',

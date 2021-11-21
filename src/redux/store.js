@@ -9,9 +9,10 @@ import {
   PURGE,
   REGISTER,
 } from 'redux-persist';
-import storage from 'redux-persist/lib/storage';
 import logger from 'redux-logger';
-import contactsReducer from './contact/contacts-reducers';
+import storage from 'redux-persist/lib/storage';
+import { contactsReducer } from './contacts';
+import { authReducer } from './auth';
 
 const middleware = [
   ...getDefaultMiddleware({
@@ -22,19 +23,19 @@ const middleware = [
   logger,
 ];
 
-const phonebookPersistConfig = {
-  key: 'contacts',
+const authPersistConfig = {
+  key: 'auth',
   storage,
-  blacklist: ['filter'],
+  whitelist: ['token'],
 };
 
 export const store = configureStore({
   reducer: {
-    contacts: persistReducer(phonebookPersistConfig, contactsReducer),
+    auth: persistReducer(authPersistConfig, authReducer),
+    contacts: contactsReducer,
   },
   middleware,
   devTools: process.env.NODE_ENV === 'development',
 });
 
 export const persistor = persistStore(store);
-// export default store;
